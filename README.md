@@ -8,7 +8,8 @@ An implementation of classifier chains for multi-label prediction. Users can tak
 ```
 if ( !('devtools' %in% installed.packages()) ) install.packages("devtools")
 
-devtools::install_github('bearloga/MLPUGS')
+devtools::install_github("bearloga/MLPUGS")
+# devtools::install_github("bearloga/MLPUGS", build_vignettes = TRUE)
 ```
 
 ## Basic Usage
@@ -21,7 +22,7 @@ y_pred <- summary(preds)
 # y_pred <- train(x, y) %>% predict(x_new) %>% summary
 ```
 
-For a detailed tutorial, please see `browseVignettes(package="MLPUGS")`
+For a detailed tutorial, please see `browseVignettes(package="MLPUGS")`.
 
 ### External Classifiers
 
