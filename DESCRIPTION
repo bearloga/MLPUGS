@@ -1,0 +1,30 @@
+Package: MLPUGS
+Type: Package
+Title: MultiLabel Prediction Using Gibbs Sampling (& Classifier Chains)
+Version: 0.1.0
+Date: 2015-04-21
+Authors@R: person("Mikhail","Popov",email="mikhail@mpopov.com",role=c("aut","cre"),comment="@bearloga on Twitter")
+Description: An implementation of classifier chains for multi-label prediction.
+    Users can take advantage of the built-in C++ classification engines, use a
+    package (e.g. C50, randomForest), or supply their own. The package can
+    train a single set of CCs or train an ensemble of CCs -- in parallel if
+    running in a multicore environment. New observations are classified using
+    a Gibbs sampler since each unobserved label is conditioned on the others.
+    The package includes methods for evaluating the predictions for accuracy
+    and aggregating across iterations & models to make final binary or
+    probabilistic classifications.
+URL: https://github.com/bearloga/MLPUGS
+BugReports: https://github.com/bearloga/MLPUGS/issues
+Depends: 
+    R (>= 3.1.2)
+Imports: 
+    magrittr (>= 1.5)
+Suggests: 
+    knitr,
+    dplyr,
+    ggplot2,
+    C50,
+    randomForest
+VignetteBuilder: knitr
+LazyData: true
+License: MIT + file LICENSE
