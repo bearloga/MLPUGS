@@ -20,9 +20,15 @@
 
 train_ecc <- function(x, y, m = 1,
                       parallel = TRUE, silent = FALSE,
-                      FUN=NULL, ...)
+                      FUN = NULL, ...)
 {
-  if ( is.null(FUN) ) stop("no built-in classifier yet, please supply FUN")
+  if (is.null(FUN)) {
+    if (requireNamespace("greenr", quietly = TRUE)) {
+      FUN <- greenr::forest
+    } else {
+      stop("Development version of greenr not installed, please supply your own FUN")
+    }
+  }
   n <- nrow(x)
   if ( n != nrow(y) ) stop("x and y must have the same number of rows")
   L <- ncol(y)

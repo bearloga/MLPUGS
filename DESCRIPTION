@@ -24,7 +24,8 @@ Suggests:
     dplyr,
     ggplot2,
     C50,
-    randomForest
+    randomForest,
+    greenr
 VignetteBuilder: knitr
 LazyData: true
 License: MIT + file LICENSE

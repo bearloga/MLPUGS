@@ -38,11 +38,19 @@
 #' @export
 
 predict.ECC <- function(object, newdata,
-                        n.iters=300, burn.in=100, thin=2,
-                        parallel=TRUE, silent=FALSE,
-                        FUN=NULL, ...)
+                        n.iters = 300, burn.in = 100, thin = 2,
+                        parallel = TRUE, silent = FALSE,
+                        FUN = NULL, ...)
 {
-  if ( is.null(FUN) ) stop("no built-in classifier yet, please supply FUN")
+  if (is.null(FUN)) {
+    if (requireNamespace("greenr", quietly = TRUE)) {
+      FUN <- function(object, newdata, ...) {
+        greenr::forest(object, newdata, type = "prob", ...)
+      }
+    } else {
+      stop("Development version of greenr not installed, please supply your own FUN")
+    }
+  }
   m <- length(object$fits)
   L <- length(object$y_labels)
   n <- nrow(newdata)
