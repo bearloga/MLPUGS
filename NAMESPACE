@@ -3,7 +3,7 @@
 S3method(predict,ECC)
 S3method(summary,PUGS)
 S3method(validate,PUGS)
-export(train_ecc)
+export(ecc)
 export(validate)
 importFrom(magrittr,"%<>%")
 importFrom(magrittr,"%>%")

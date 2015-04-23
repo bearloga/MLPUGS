@@ -26,7 +26,7 @@ Classifier chains (Read et al., 2009) (**CC**) is a type of **BM** that exploits
 3. Collapse multiple iterations and models into a final set of predictions.
 
 ```{r,eval=FALSE}
-train_ecc(x, y) %>% predict(newdata) %>% summary
+ecc(x, y) %>% predict(newdata) %>% summary
 ```
 
 We will go through each of the steps, including an evaluation step, in the example below.
@@ -57,17 +57,17 @@ movies[c(17247, 251, 21393, 7078, 7079, 7080),-c(8:16)] %>% {
 
 ```{r}
 # Only use movies that belong to at least one genre:
-movies <- movies[apply(movies[,18:24],1,sum) > 0, ]
+movies <- movies[apply(movies[,18:24], 1, sum) > 0, ]
 levels(movies$mpaa)[1] <- "missing" # C5.0 can't handle ""
 # Select a random 80% of the movies for training:
 set.seed(0)
-in_training <- sample(1:nrow(movies),floor(nrow(movies)*0.80),replace=FALSE)
+in_training <- sample(1:nrow(movies), floor(nrow(movies)*0.80), replace = FALSE)
 # Training:
-x.train <- movies[in_training,2:17][,-3] # omit budget (lots of NAs)
-y.train <- movies[in_training,18:24]
+x.train <- movies[in_training, 2:17][, -3] # omit budget (lots of NAs)
+y.train <- movies[in_training, 18:24]
 # Validation:
-x.test <- movies[-in_training,2:17][,-3] # omit budget (lots of NAs)
-y.test <- movies[-in_training,18:24]
+x.test <- movies[-in_training, 2:17][, -3] # omit budget (lots of NAs)
+y.test <- movies[-in_training, 18:24]
 ```
 
 ```{r,echo=FALSE}
@@ -81,14 +81,14 @@ rm(movies)
 There is no built-in classifier as of the writing of this vignette, so `train_ecc` requires us to give it an appropriate classifier to train. In a future release, `MLPUGS` will include a classifier to work-out-of-the-box, although the package was written to allow for user-supplied classifiers. We could, for example, use the `randomForest` package, in which case our code will look like:
 
 ```{r,eval=FALSE}
-ecc <- train_ecc(x.train, y.train, FUN = randomForest::randomForest)
+fit <- ecc(x.train, y.train, FUN = randomForest::randomForest)
 ```
 
 For this example we are going to use decision trees based on Quinlan's C5.0 algorithm:
 
 ```{r,eval=FALSE}
-ecc <- train_ecc(x.train, y.train, m = 3, parallel = TRUE,
-                 FUN = C50::C5.0, trials = 10)
+fit <- tecc(x.train, y.train, m = 3, parallel = TRUE,
+            FUN = C50::C5.0, trials = 10)
 #> Trained model 1 on response 1 (took 7.824 seconds)
 #> ...
 #> Trained model 3 on response 7 (took 3.838 seconds)
@@ -109,14 +109,14 @@ Multi-label prediction is tricky with classifier chains because each label's cla
 There is no built-in classifier as of the writing of this vignette, so `predict` requires us to give it an appropriate prediction function. If we had chosen to use the `randomForest` package, our code would look like
 
 ```{r,eval=FALSE}
-pugs <- predict(ecc, x.test,
+pugs <- predict(fit, x.test,
  FUN = randomForest:::predict.randomForest, type = "prob")
 ```
 
 However, we are going to continue the example where we trained an ensemble of classifier chains based on the C5.0 decision trees.
 
 ```{r,eval=FALSE}
-pugs <- predict(ecc, x.test,
+pugs <- predict(fit, x.test,
                 n.iters = 100, burn.in = 50, thin = 2,
                 FUN = C50::predict.C5.0, type="prob")
 

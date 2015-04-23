@@ -5,7 +5,7 @@
 #' \code{type = "class"} for binary (0/1) predictions
 #' @return A matrix of predictions.
 #' @examples \dontrun{
-#'   y.pred <- train_ecc(x, y) %>% predict(x.new) %>% summary
+#'   y.pred <- ecc(x, y) %>% predict(x.new) %>% summary
 #' }
 
 #' @export
@@ -18,13 +18,13 @@ summary.PUGS <- function(object, ...)
   if ( type == "class" ) {
     # majority <- . %>% table %>% { names(.)[which.max(.)] } %>% as.numeric
     majority <- function(y) 1*((sum(y)/length(y))>0.5)
-    object$preds %>% apply(c(1,2,4),majority) %>%
-      apply(c(1,2),majority) %>%
+    object$preds %>% apply(c(1, 2, 4), majority) %>%
+      apply(c(1, 2), majority) %>%
       { colnames(.) <- object$y_labels; . } %>%
       return
   } else {
-    object$preds %>% apply(c(1,2,4),function(y){sum(y)/length(y)}) %>%
-      apply(c(1,2),mean) %>%
+    object$preds %>% apply(c(1, 2, 4), function(y) sum(y)/length(y) ) %>%
+      apply(c(1, 2), mean) %>%
       { colnames(.) <- object$y_labels; . } %>%
       return
   }

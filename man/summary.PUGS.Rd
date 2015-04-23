@@ -20,7 +20,7 @@ Gather samples of predictions
 }
 \examples{
 \dontrun{
-  y.pred <- train_ecc(x, y) \%>\% predict(x.new) \%>\% summary
+  y.pred <- ecc(x, y) \%>\% predict(x.new) \%>\% summary
 }
 }
 

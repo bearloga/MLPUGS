@@ -8,7 +8,7 @@
   thin = 2, parallel = TRUE, silent = FALSE, FUN = NULL, ...)
 }
 \arguments{
-\item{object}{An object of type \code{ECC} returned by \code{\link{train_ecc}}.}
+\item{object}{An object of type \code{ECC} returned by \code{\link{ecc}}.}
 
 \item{newdata}{A data frame or matrix of features. Must be the same form as
 the one used with \code{train_ecc}.}
@@ -43,18 +43,18 @@ Uses a trained ECC and Gibbs sampling to predict labels for new samples.
 \examples{
 \dontrun{
 
-  y.pred <- train_ecc(x, y) \%>\% predict(x.new)
+  y.pred <- ecc(x, y) \%>\% predict(x.new)
 
-  y.pred <- train_ecc(x, y, FUN = foo_train) \%>\%
+  y.pred <- ecc(x, y, FUN = foo_train) \%>\%
     predict(x.new, FUN = foo_predict)
 
-  y.pred <- train_ecc(x, y, FUN = C50::C5.0) \%>\%
-    predict(x.new,C50::predict.C5.0,type = "prob")
+  y.pred <- ecc(x, y, FUN = C50::C5.0) \%>\%
+    predict(x.new, FUN = C50::predict.C5.0, type = "prob")
 
-  y.pred <- train_ecc(x, y, FUN = randomForest::randomForest) \%>\%
+  y.pred <- ecc(x, y, FUN = randomForest::randomForest) \%>\%
     predict(x.new, n.iters = 1000, burn.in = 100, thin = 10,
-            FUN = function(rF,newdata){
-              randomForest:::predict.randomForest(rF,newdata,type="prob")
+            FUN = function(rF, newdata){
+              randomForest:::predict.randomForest(rF, newdata, type="prob")
              })
 }
 }
