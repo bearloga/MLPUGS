@@ -5,16 +5,16 @@ An implementation of classifier chains for multi-label prediction. Users can emp
 
 ## Installation
 
-```
+```R
 if ( !('devtools' %in% installed.packages()) ) install.packages("devtools")
 
-devtools::install_github("bearloga/MLPUGS")
-# devtools::install_github("bearloga/MLPUGS", build_vignettes = TRUE)
+devtools::install_github("bearloga/MLPUGS") # or...
+devtools::install_github("bearloga/MLPUGS", build_vignettes = TRUE)
 ```
 
 ## Basic Usage
 
-```
+```R
 fit <- ecc(x, y)
 preds <- predict(fit, x_new)
 y_pred <- summary(preds)
@@ -28,24 +28,24 @@ For a detailed tutorial, please see `browseVignettes(package="MLPUGS")`.
 
 Currently, there is no built-in classifier in version 0.1.1, but users can supply their own or use an existing package. For example:
 
-```
-## Random Forest:
+```R
+# Random Forest:
 foo_train <- function(x, y) randomForest::randomForest(x, y)
 foo_predict <- function(x, newdata) randomForest:::predict.randomForest(x, newdata, type = "prob")
 
-## C5.0:
-# foo_train <- function(x, y) C50::C5.0(x, y)
-# foo_predict <- function(x, newdata) C50::predict.C5.0(x, newdata, type = "prob")
+# C5.0:
+foo_train <- function(x, y) C50::C5.0(x, y)
+foo_predict <- function(x, newdata) C50::predict.C5.0(x, newdata, type = "prob")
 
 fit <- ecc(x, y, FUN = foo_train)
 pugs <- predict(fit, x_new, FUN = foo_predict)
 y_pred <- summary(pugs, type = "prob")
 
-# y_pred <- ecc(x, y, FUN = foo_train) %>%
-#           predict(x_new, FUN = foo_predict) %>%
-#           summary(type = "prob")
+y_pred <- ecc(x, y, FUN = foo_train) %>%
+          predict(x_new, FUN = foo_predict) %>%
+          summary(type = "prob")
 ```
 
-Future versions will use the [`greenr`](https://github.com/bearloga/greenr) package by default and will maintain the ability to use other classifiers.
+Future versions will use the [greenr](https://github.com/bearloga/greenr) package by default and will maintain the ability to use other classifiers.
 
 Please note that this project is released with a [Contributor Code of Conduct](CONDUCT.md). By participating in this project you agree to abide by its terms.
