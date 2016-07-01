@@ -8,27 +8,28 @@
 #' \code{m = 3} and \code{m = 7} for 4-core and 8-core systems, respectively.
 #' @param parallel Whether to utilize multicore capabilities of the system.
 #' @param silent Whether to print progress messages to console. Recommended.
-#' @param FUN User-supplied classifier training function. If not supplied, the
+#' @param .f User-supplied classifier training function. If not supplied, the
 #' trainer will use the built-in classifier. See Details for more information.
-#' @param ... additional arguments to pass to \code{FUN}.
+#' @param ... additional arguments to pass to \code{.f}.
 #' @return A object of class \code{ecc}.
 #' @examples \dontrun{
-#'   fit <- ecc(x, y, FUN = randomForest::randomForest)
-#'   fit <- ecc(x, y, m = 7, FUN = C50::C5.0, trials = 10)
+#' x <- movies_train[, -(1:3)]
+#' y <- movies_train[, 1:3]
+#'
+#' fit <- ecc(x, y, .f = randomForest::randomForest)
+#'
+#' fit <- ecc(x, y, m = 7, .f = C50::C5.0, trials = 10)
+#'
+#' fit <- ecc(x, y, m = 5, .f = function(x, y, ...) {
+#'   xgboost::xgboost(data = as.matrix(x), label = as.numeric(y)-1, ...)
+#' }, params = list(objective = "binary:logistic"), nrounds = 100)
 #' }
 #' @export
 
-ecc <- function(x, y, m = 1,
+ecc <- function(x, y, m = 5,
                 parallel = TRUE, silent = FALSE,
-                FUN = NULL, ...)
+                .f = NULL, ...)
 {
-  if (is.null(FUN)) {
-    if (requireNamespace("greenr", quietly = TRUE)) {
-      FUN <- greenr::forest
-    } else {
-      stop("Development version of greenr not installed, please supply your own FUN")
-    }
-  }
   n <- nrow(x)
   if ( n != nrow(y) ) stop("x and y must have the same number of rows")
   L <- ncol(y)
@@ -37,17 +38,17 @@ ecc <- function(x, y, m = 1,
   returnable$y_labels <- colnames(y)
   colnames(y) <- paste0('label_', 1:L)
   returnable$fits <- parallel::mclapply(1:m, function(k) {
-    idx <- sample(1:n, floor((1-0.025*(m-1))*n), replace=FALSE)
+    idx <- sample(1:n, floor((1-0.025*(m-1))*n), replace = FALSE)
     fit <- list()
     for ( l in 1:L ) {
       elapsed <- system.time({
-        fit[[l]] <- FUN(x = cbind(x,y[,-l]), y = factor(y[,l]), ...)
+        fit[[l]] <- .f(x = cbind(x, y[, -l]), y = factor(y[, l]), ...)
       })['elapsed']
       if (!silent) cat(sprintf("Trained model %.0f on response %.0f (took %.3f seconds)\n",
                                k, l, elapsed))
     }
     return(fit)
-  }, mc.cores=ifelse(Sys.info()[['sysname']]=="Windows", 1, parallel::detectCores()))
+  }, mc.cores = ifelse(Sys.info()[['sysname']] == "Windows", 1, parallel::detectCores()))
   class(returnable) <- "ECC"
   return(returnable)
   
