@@ -9,24 +9,24 @@ vignette: >
   \usepackage[utf8]{inputenc}
 ---
 
-```{r,echo=FALSE}
-library(magrittr)
-```
-
 ## Introduction
 
-Suppose we have a dataset $D$ of $n$ observations and a label set $L$. Each $i$-th instance can have one or more labels $(S_i \subseteq L)$. In the multi-label classification problem, we are given $x_*$ and we are interested in $\hat{S}_*$. The most well known approach to this problem is *binary relevance* (**BM**), which transforms the problem into one binary classification problem for each label.
+Suppose we have a dataset $D$ of $n$ observations and a label set $L$. Each $i$-th instance can have one or more labels $(S_i \subseteq L)$. In the multi-label classification problem, we are given $x_*$ and we are interested in $\hat{S}_*$. The most well known approach to this problem is *binary relevance* (**BM**), which transforms the problem into one binary classification problem for each label. The problem with this approach is that it ignores the relationship between the response variables, akin to fitting two multiple regression models when one should instead be using multivariate regression.
 
-Classifier chains (Read et al., 2009) (**CC**) is a type of **BM** that exploits the correlations between the labels. Each link in the chain is trained to predict label $l_j \in L$ using the feature space extended to include $(l_1,\ldots,l_{j-1})$. An Ensemble of Classifier Chains (**ECC**) trains $m$ **CC** classifiers where each $C_k$ is trained with a random subset of $D$ and is likely to be unique and able to give different multi-label predictions.
+Classifier chains (Read et al., 2009) (**CC**) is a type of **BM** that makes use of the correlations between the labels. Each link in the chain is trained to predict label $l_j \in L$ using a feature space extended to include $(l_1,\ldots,l_{j-1})$. An *Ensemble of Classifier Chains* (**ECC**) trains $m$ **CC** classifiers where each $C_k$ is trained with a random subset of $D$ and is likely to be unique and able to give different multi-label predictions.
 
-## MLPUGS Classification Pipeline
+Of course, the problem with this approach is that to make a prediction for any of the labels, we need to know what the other labels are, which we don't because we also need to predict those. This is where the idea of Gibbs sampling comes in. We start with random predictions, then proceed label-by-label, conditioning on the most recent predictions within each iteration. After the burn-in, we should have have a stable multivariate distribution of the labels for each observation.
 
-1. Train an **ECC** using any base classifier.
+## Classification Pipeline
+
+**MLPUGS** (**M**ulti-**l**abel **p**rediction **u**sing **G**ibbs **s**ampling) is a wrapper that takes any binary classification algorithm as a base classifier and constructs an **ECC** and uses Gibbs sampling to make the multi-label predictions.
+
+1. Train an **ECC** using any base classifier that can predict classes and probabilities.
 2. Use it to make predictions (using Gibbs sampling).
 3. Collapse multiple iterations and models into a final set of predictions.
 
-```{r,eval=FALSE}
-ecc(x, y) %>% predict(newdata) %>% summary
+```{r example, eval = FALSE}
+ecc(x, y) %>% predict(newdata) %>% [summary|validate]
 ```
 
 We will go through each of the steps, including an evaluation step, in the example below.
@@ -35,66 +35,37 @@ We will go through each of the steps, including an evaluation step, in the examp
 
 This package was designed to take advantage of multiple cores unless the OS is Windows. On a quad-core processor it's recommended to parallel train an ensemble of 3 models. On 6-core and 8-core processors the recommended number of models is 5 and 7, respectively. Predictions are also performed in parallel, if the user allows it.
 
-## Example: Classifying Movies
+## Example: Movies
 
-For this exercise we are going to use the `movies` dataset from the `ggplot2` package, which Hadley Wickham compiled from [IMDB](http://www.imdb.com)'s raw data. This data set contains studio- and fan-supplied information about 28819 movies, including which genres (action, animation, comedy, drama, documentary, romance, short) each movie belongs to, if any. To learn more about this dataset: `help("movies",package="ggplot2")`.
-
-```{r}
-data("movies",package="ggplot2")
+```{r setup}
+library(MLPUGS)
+data("movies")
 ```
 
-```{r,echo=FALSE}
-movies[c(17247, 251, 21393, 7078, 7079, 7080),-c(8:16)] %>% {
-  cbind(.[,-(9:15)],genres = apply(.[9:15]==1,1,
-                          . %>% names(.)[.] %>% paste0(collapse=", ")))
-} %>%
-  dplyr::mutate(budget=budget/1e6) %>%
-  dplyr::rename(`budget ($mil)`=budget) %>%
-  knitr::kable(caption="**Table 1**: Movie information and user ratings from IMDB.com",row.names=FALSE)
+```{r data_head, eval = FALSE}
+head(movies)
 ```
 
-`r2,...,r10` were omitted to save space. We are going to split the dataset into two separate sets: a training set (80%) and a validation set (20%) for assessing the accuracy of our predictions.
-
-```{r}
-# Only use movies that belong to at least one genre:
-movies <- movies[apply(movies[,18:24], 1, sum) > 0, ]
-levels(movies$mpaa)[1] <- "missing" # C5.0 can't handle ""
-# Select a random 80% of the movies for training:
-set.seed(0)
-in_training <- sample(1:nrow(movies), floor(nrow(movies)*0.80), replace = FALSE)
-# Training:
-x.train <- movies[in_training, 2:17][, -3] # omit budget (lots of NAs)
-y.train <- movies[in_training, 18:24]
-# Validation:
-x.test <- movies[-in_training, 2:17][, -3] # omit budget (lots of NAs)
-y.test <- movies[-in_training, 18:24]
+```{r formatted_data_head, echo = FALSE}
+knitr::kable(head(movies))
 ```
 
-```{r,echo=FALSE}
-movie_titles <- movies$title
-rm(movies)
-```
+We are going use a pre-made training dataset `movies_train` (60% of `movies`) to train our **ECC** and `movies_test` (remaining 40%) for assessing the accuracy of our predictions.
 
+```{r load_datasets}
+data("movies_train"); data("movies_test")
+```
 
 ### Training an Ensemble of Classifier Chains (ECC)
 
 There is no built-in classifier as of the writing of this vignette, so `train_ecc` requires us to give it an appropriate classifier to train. In a future release, `MLPUGS` will include a classifier to work-out-of-the-box, although the package was written to allow for user-supplied classifiers. We could, for example, use the `randomForest` package, in which case our code will look like:
 
-```{r,eval=FALSE}
-fit <- ecc(x.train, y.train, FUN = randomForest::randomForest)
+```{r train, eval = FALSE}
+fit <- ecc(movies_train[, -(1:3)], movies_train[1:3], 3, randomForest::randomForest,
+           replace = TRUE)
 ```
 
-For this example we are going to use decision trees based on Quinlan's C5.0 algorithm:
-
-```{r,eval=FALSE}
-fit <- tecc(x.train, y.train, m = 3, parallel = TRUE,
-            FUN = C50::C5.0, trials = 10)
-#> Trained model 1 on response 1 (took 7.824 seconds)
-#> ...
-#> Trained model 3 on response 7 (took 3.838 seconds)
-```
-
-This will give us 3 models, forming an ensemble of classifier chains. Each one was trained on random 95% of the data. (If we had trained 1 set of classifier chains, that model would have used all of the training data.)
+This will give us 3 models, forming an ensemble of classifier chains. Each set of classifier chains was trained on a random 95% of the available training data. (If we had trained 1 set of classifier chains, that model would have used all of the training data.)
 
 ### Prediction Using Gibbs Sampling (PUGS)
 
@@ -106,103 +77,95 @@ This will give us 3 models, forming an ensemble of classifier chains. Each one w
 
 Multi-label prediction is tricky with classifier chains because each label's classifier was trained using the other labels. That is, we must predict an unobserved set of values using `L-1` sets of unobserved values. To this end, we employ the Gibbs Sampler.
 
-There is no built-in classifier as of the writing of this vignette, so `predict` requires us to give it an appropriate prediction function. If we had chosen to use the `randomForest` package, our code would look like
+There is no built-in classifier as of the writing of this vignette, so `predict` requires us to give it an appropriate prediction function. We chose to train a `randomForest`, so we must supply a corresponding function for making the predictions.
 
-```{r,eval=FALSE}
-pugs <- predict(fit, x.test,
- FUN = randomForest:::predict.randomForest, type = "prob")
+```{r predict_rf, eval = FALSE}
+pugs <- predict(fit, movies_test[, -(1:3)], burn.in = 500, n.iters = 1500, thin = 15,
+                .f = randomForest:::predict.randomForest, type = "prob")
 ```
 
-However, we are going to continue the example where we trained an ensemble of classifier chains based on the C5.0 decision trees.
-
-```{r,eval=FALSE}
-pugs <- predict(fit, x.test,
-                n.iters = 100, burn.in = 50, thin = 2,
-                FUN = C50::predict.C5.0, type="prob")
-
-#> Model 1 finished Iteration 2 (took 6.728 seconds) : 1.00% done
-#> ...
-#> Model 3 finished Iteration 150 (took 6.869 seconds) : 100.00% done
-```
-
-This will give us a total of 50 predictions of each genre for each observation.
+This will give us a total of 30 predictions (10 iterations, 3 sets of chains) for each movie's rating on Rotten Tomatoes, Metacritic, and Fandango.
 
 ### Gathering Predictions
 
 When we collapse the predictions using `summary`, we can ask it to provide us with binary classifications or probabilistic classifications. Binary classification works by picking the most-predicted classification between the iterations and then the models.
 
-```{r,eval=FALSE}
-y.pred <- summary(pugs, type = "prob")
+```{r gather_prob, eval = FALSE}
+y_pred <- summary(pugs, type = "prob")
 ```
 
-```{r,echo=FALSE,eval=FALSE}
-head(y.pred) %>% round(3) %>% cbind(Title=head(movie_titles[-in_training]),.) %>% knitr::kable()
+```{r compare_prob, echo = FALSE, eval = FALSE}
+rownames(y_pred) <- rownames(movies_test)
+knitr::kable(head(y_pred, 5), digits = 3)
 ```
 
-**Table 2**: Probabilistic classifications for the first 5 movies in the test (validation) set.
+**Table 2**: Probabilistic classifications for the first 5 movies in the validation set.
 
-|Title                      |Action |Animation |Comedy |Drama |Documentary |Romance |Short |
-|:--------------------------|:------|:---------|:------|:-----|:-----------|:-------|:-----|
-|$21 a Day Once a Month     |0      |0.97      |0.91   |0     |0.01        |0.007   |0.997 |
-|$40,000                    |0.097  |0.077     |0.08   |0.133 |0.673       |0.007   |0.053 |
-|'?' Motorist, The          |0.003  |0.047     |0.16   |0.277 |0.273       |0       |0.977 |
-|'Crocodile' Dundee II      |0.327  |0.007     |0.54   |0.477 |0.013       |0.103   |0     |
-|'El Chicko' - der Verdacht |0.317  |0.05      |0.397  |0.277 |0.05        |0.06    |0.043 |
-|'Hyp-Nut-Tist', The        |0.003  |0.957     |0.717  |0.007 |0.01        |0.003   |1     |
+|                               | rotten_tomatoes| metacritic| fandango|
+|:------------------------------|---------------:|----------:|--------:|
+|Avengers: Age of Ultron (2015) |           0.767|      0.287|    0.979|
+|Do You Believe? (2015)         |           0.310|      0.131|    0.883|
+|Hot Tub Time Machine 2 (2015)  |           0.001|      0.000|    0.018|
+|The Water Diviner (2015)       |           0.223|      0.023|    0.983|
+|Top Five (2014)                |           0.541|      0.016|    0.766|
 
-```{r,eval=FALSE}
-y.pred <- summary(pugs, type = "class")
+```{r gather_class, eval = FALSE}
+y_pred <- summary(pugs, type = "class")
 ```
 
-```{r,echo=FALSE,eval=FALSE}
-head(y.pred) %>% cbind(Title=head(movie_titles[-in_training]),.) %>% knitr::kable()
+```{r compare_class, echo = FALSE, eval = FALSE}
+rownames(y_pred) <- rownames(movies_test)
+knitr::kable(head(y_pred, 5), digits = 3)
 ```
 
-**Table 3**: Binary classifications for the first 5 movies in the test (validation) set.
+**Table 3**: Binary classifications for the first 5 movies in the validation set.
 
-|Title                      |Action |Animation |Comedy |Drama |Documentary |Romance |Short |
-|:--------------------------|:-----:|:--------:|:-----:|:----:|:----------:|:------:|:----:|
-|$21 a Day Once a Month     |0      |1         |1      |0     |0           |0       |1     |
-|$40,000                    |0      |0         |0      |0     |1           |0       |0     |
-|'?' Motorist, The          |0      |0         |0      |0     |0           |0       |1     |
-|'Crocodile' Dundee II      |0      |0         |1      |0     |0           |0       |0     |
-|'El Chicko' - der Verdacht |0      |0         |0      |0     |0           |0       |0     |
-|'Hyp-Nut-Tist', The        |0      |1         |1      |0     |0           |0       |1     |
+|                               | rotten_tomatoes| metacritic| fandango|
+|:------------------------------|---------------:|----------:|--------:|
+|Avengers: Age of Ultron (2015) |               1|          0|        1|
+|Do You Believe? (2015)         |               0|          0|        1|
+|Hot Tub Time Machine 2 (2015)  |               0|          0|        0|
+|The Water Diviner (2015)       |               0|          0|        1|
+|Top Five (2014)                |               1|          0|        1|
 
-An advantage of using probabilistic classification over binary is that you can experiment with the threshold you use. You may find, for example, that the intuitive 0.5 doesn't work as well as, say, 0.62.
+An advantage of using probabilistic classification over binary is that you can experiment with the threshold you use. You may find, for example, that the intuitive and initial threshold of 0.5 doesn't work as well as, say, 0.62.
 
 ## Evaluation
 
-So how well did our ensemble of classifier chains perform? Here are true classifications of first 6 movies in the test (validation) set:
+So how well did our ensemble of classifier chains perform? Here are true classifications of first 5 movies in the test (validation) set:
 
 ```{r,echo=FALSE}
-head(y.test) %>% cbind(Title=head(movie_titles[-in_training]),.) %>% knitr::kable(caption="**Table 4**: True classifications for the first 5 movies in the test (validation) set.")
+knitr::kable(movies_test[1:5, 1:3],
+             caption="**Table 4**: True classifications for the first 5 movies in the test (validation) set.")
 ```
 
 Let's calculate some established measures of accuracy for multi-label classification:
 
 ```{r,eval=FALSE}
-pugs %>% validate(y.test)
+validate(pugs, movies_test[, 1:3])
 ```
 
 ```{r,eval=FALSE,echo=FALSE}
-temp <- pugs %>% validate(y.test)
-temp %>% as.data.frame %>% { names(.) <- c("Measure of Accuracy"); .} %>%
-  cbind(Comment=c("provides a steep penalty for predictions that are both confident and wrong",
-                  "average per-obs exact classification",
-                  "average per-obs classification with partial matches",
-                  "per-label classification with partial matches",
-                  "average per-example per-class total error")) %>%
-  knitr::kable(digits = 4)
+temp <- as.data.frame(t(validate(pugs, movies_test[, 1:3])))
+colnames(temp) <- "Measurement"
+temp <- cbind(temp, Description = c(
+  "provides a steep penalty for predictions that are both confident and wrong",
+  "average per-obs exact classification",
+  "average per-obs classification with partial matches",
+  "per-label classification with partial matches",
+  "average per-example per-class total error"))
+knitr::kable(temp, digits = 4)
 ```
 
-|Measure of Accuracy||Comment|
-|:----------|----------:|:----------|
-|Logarithmic Loss  |0.3556|provides a steep penalty for predictions that are both confident and wrong |
-|Exact Match Ratio |0.3781|average per-obs exact classification|
-|Labelling Fscore  |0.4856|average per-obs classification with partial matches|
-|Retrieval Fscore  |0.3657|per-label classification with partial matches|
-|Hamming Loss      |0.1410|average per-example per-class total error|                               
+|                  | Measurement|Description                                                                |
+|:-----------------|-----------:|:--------------------------------------------------------------------------|
+|Logarithmic.Loss  |      0.3180|provides a steep penalty for predictions that are both confident and wrong |
+|Exact.Match.Ratio |      0.6441|average per-obs exact classification                                       |
+|Labelling.F.score |      0.7853|average per-obs classification with partial matches                        |
+|Retrieval.F.score |      0.6034|per-label classification with partial matches                              |
+|Hamming.Loss      |      0.1299|average per-example per-class total error                                  |          
+
+Not bad!
 
 ## Further Reading
 
