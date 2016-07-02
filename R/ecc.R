@@ -1,5 +1,6 @@
-#' Fit an Ensemble of Classifier Chains (ECC)
-#' 
+#' @title Fit an Ensemble of Classifier Chains (ECC)
+#' @description Constructs an ensemble of classifier chains, each chain using a
+#'   user-supplied base classifier.
 #' @param x A data frame or matrix of features.
 #' @param y A data frame or matrix of labels. Each label must be its own column
 #' and each instance (observation) must be a row of 0s and 1s, indicating which
@@ -19,10 +20,6 @@
 #' fit <- ecc(x, y, .f = randomForest::randomForest)
 #'
 #' fit <- ecc(x, y, m = 7, .f = C50::C5.0, trials = 10)
-#'
-#' fit <- ecc(x, y, m = 5, .f = function(x, y, ...) {
-#'   xgboost::xgboost(data = as.matrix(x), label = as.numeric(y)-1, ...)
-#' }, params = list(objective = "binary:logistic"), nrounds = 100)
 #' }
 #' @export
 

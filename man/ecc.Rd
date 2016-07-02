@@ -29,7 +29,8 @@ trainer will use the built-in classifier. See Details for more information.}
 A object of class \code{ecc}.
 }
 \description{
-Fit an Ensemble of Classifier Chains (ECC)
+Constructs an ensemble of classifier chains, each chain using a
+  user-supplied base classifier.
 }
 \examples{
 \dontrun{
@@ -39,10 +40,6 @@ y <- movies_train[, 1:3]
 fit <- ecc(x, y, .f = randomForest::randomForest)
 
 fit <- ecc(x, y, m = 7, .f = C50::C5.0, trials = 10)
-
-fit <- ecc(x, y, m = 5, .f = function(x, y, ...) {
-  xgboost::xgboost(data = as.matrix(x), label = as.numeric(y)-1, ...)
-}, params = list(objective = "binary:logistic"), nrounds = 100)
 }
 }
 

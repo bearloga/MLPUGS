@@ -41,7 +41,11 @@ validate.PUGS <- function(object, y)
       log_loss <- -mean(as.numeric((y * log(y_hat)) + ((1-y) * log(1 - y_hat))))
       y_hat <- summary(object, type = "class")
       safe_mean <- function(x) {
-        return(mean(x[!is.nan(x)]))
+        if (any(is.nan(x))) {
+          message("NaNs detected when computing F-scores. This is caused by observations (instances) which do not have any labels. These obs. have been removed from F-score calculation, so we recommend placing heavier emphasis on other accuracy metrics.")
+          return(mean(x[!is.nan(x)]))
+        }
+        return(mean(x))
       }
       return(data.frame("Logarithmic Loss" = log_loss,
                         # ^ logarithmic loss provides a steep penalty for predictions

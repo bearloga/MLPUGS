@@ -2,16 +2,18 @@
 #' @description Uses a trained ECC and Gibbs sampling to predict labels for new
 #'   samples. \code{.f} must return a matrix of probabilities, one row for each
 #'   observation in \code{newdata}.
-#' @param object An object of type \code{ECC} returned by \code{\link{ecc}}.
+#' @param object An object of type \code{ECC} returned by \code{\link{ecc}()}.
 #' @param newdata A data frame or matrix of features. Must be the same form as
-#' the one used with \code{train_ecc}.
+#' the one used with \code{\link{ecc}()}.
 #' @param n.iters Number of iterations of the Gibbs sampler.
 #' @param burn.in Number of iterations for adaptation (burn-in).
 #' @param thin Thinning interval.
-#' @param parallel Whether to utilize multicore capabilities of the system.
-#' @param silent Whether to print progress messages to console. Recommended.
+#' @param parallel Logical flag for utilizing multicore capabilities of the
+#'   system.
+#' @param silent Logical flag indicating whether to have a progress bar (if
+#'   the 'progress' package is installed) or print progress messages to console.
 #' @param .f User-supplied prediction function that corresponds to the type of
-#' classifier that was trained in the \code{train_ecc} step. See Details below.
+#' classifier that was trained in the \code{\link{ecc}()} step. See Details.
 #' @param ... additional arguments to pass to \code{.f}.
 #' @return An object of class \code{PUGS} containing: \itemize{
 #'  \item \code{y_labels} : inherited from \code{object}
@@ -35,7 +37,7 @@
 #' @export
 predict.ECC <- function(object, newdata,
                         n.iters = 300, burn.in = 100, thin = 2,
-                        parallel = TRUE, silent = FALSE,
+                        parallel = FALSE, silent = TRUE,
                         .f = NULL, ...)
 {
   m <- length(object$fits)

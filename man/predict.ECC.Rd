@@ -5,13 +5,13 @@
 \title{Classify new samples using an Ensemble of Classifier Chains}
 \usage{
 \method{predict}{ECC}(object, newdata, n.iters = 300, burn.in = 100,
-  thin = 2, parallel = TRUE, silent = FALSE, .f = NULL, ...)
+  thin = 2, parallel = FALSE, silent = TRUE, .f = NULL, ...)
 }
 \arguments{
-\item{object}{An object of type \code{ECC} returned by \code{\link{ecc}}.}
+\item{object}{An object of type \code{ECC} returned by \code{\link{ecc}()}.}
 
 \item{newdata}{A data frame or matrix of features. Must be the same form as
-the one used with \code{train_ecc}.}
+the one used with \code{\link{ecc}()}.}
 
 \item{n.iters}{Number of iterations of the Gibbs sampler.}
 
@@ -19,12 +19,14 @@ the one used with \code{train_ecc}.}
 
 \item{thin}{Thinning interval.}
 
-\item{parallel}{Whether to utilize multicore capabilities of the system.}
+\item{parallel}{Logical flag for utilizing multicore capabilities of the
+system.}
 
-\item{silent}{Whether to print progress messages to console. Recommended.}
+\item{silent}{Logical flag indicating whether to have a progress bar (if
+the 'progress' package is installed) or print progress messages to console.}
 
 \item{.f}{User-supplied prediction function that corresponds to the type of
-classifier that was trained in the \code{train_ecc} step. See Details below.}
+classifier that was trained in the \code{\link{ecc}()} step. See Details.}
 
 \item{...}{additional arguments to pass to \code{.f}.}
 }
