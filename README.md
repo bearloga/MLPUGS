@@ -17,9 +17,7 @@ devtools::install_github("bearloga/MLPUGS", build_vignettes = TRUE)
 ```R
 fit <- ecc(x, y)
 preds <- predict(fit, x_new)
-y_pred <- summary(preds)
-
-# y_pred <- ecc(x, y) %>% predict(x_new) %>% summary
+y_pred <- collapse(preds)
 ```
 
 For a detailed tutorial, please see `browseVignettes(package="MLPUGS")`.

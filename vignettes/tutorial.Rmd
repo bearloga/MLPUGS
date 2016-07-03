@@ -19,7 +19,7 @@ Of course, the problem with this approach is that to make a prediction for any o
 
 ## Classification Pipeline
 
-**MLPUGS** (**M**ulti-**l**abel **p**rediction **u**sing **G**ibbs **s**ampling) is a wrapper that takes any binary classification algorithm as a base classifier and constructs an **ECC** and uses Gibbs sampling to make the multi-label predictions.
+**MLPUGS** (**M**ulti-**l**abel **p**rediction **u**sing **G**ibbs **s**ampling) is a wrapper that takes any binary classification algorithm as a base classifier and constructs an **ECC** and uses Gibbs sampling to make the multi-label predictions. In short, the steps are:
 
 1. Train an **ECC** using any base classifier that can predict classes and probabilities.
 2. Use it to make predictions (using Gibbs sampling).
