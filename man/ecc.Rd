@@ -4,7 +4,8 @@
 \alias{ecc}
 \title{Fit an Ensemble of Classifier Chains (ECC)}
 \usage{
-ecc(x, y, m = 5, parallel = TRUE, silent = FALSE, .f = NULL, ...)
+ecc(x, y, m = 5, prop_subset = 0.95, run_parallel = TRUE,
+  silent = FALSE, .f = NULL, ...)
 }
 \arguments{
 \item{x}{A data frame or matrix of features.}
@@ -16,7 +17,11 @@ labels belong to the instance.}
 \item{m}{Number of classifier chains (models) to train. Recommended:
 \code{m = 3} and \code{m = 7} for 4-core and 8-core systems, respectively.}
 
-\item{parallel}{Whether to utilize multicore capabilities of the system.}
+\item{prop_subset}{The proportion of the training data to utilize when
+\code{m} is greater than 1. Each set of classifier chains in the ensemble
+will use a random subset (95\% by default) of the supplied training data.}
+
+\item{run_parallel}{Whether to utilize multicore capabilities of the system.}
 
 \item{silent}{Whether to print progress messages to console. Recommended.}
 
