@@ -37,6 +37,8 @@ This package was designed to take advantage of multiple cores unless the OS is W
 
 ## Example: Movies
 
+Suppose we wanted to predict whether a movie would have a good (at least 80%) critic rating on Rotten Tomatoes, Metacritic, and Fandango based on the user ratings on those websites, along with the user ratings on IMDB.com. Multi-label prediction via classifier chains allows us to use the correlation between those websites (a critically accepted movie on one review score aggregation website is likely to have high rating on another).
+
 ```{r setup}
 library(MLPUGS)
 data("movies")
