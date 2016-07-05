@@ -1,5 +1,5 @@
 MLPUGS 0.2.0
------------
+------------
 
 ## Test environments
 * local OS X install, R 3.3.1
@@ -23,5 +23,13 @@ File 'LICENSE':
 
 ## Resubmission
 This is a resubmission. In this version I have:
+
+* Updated DESCRIPTION:
+    - Switched to writing 'Multi-Label' in Title.
+    - Added the initialism (CC's) after 'classifier chains' in Description
+    - Single-quoted 'C50' and 'randomForest' suggestions in Description
+
+### Previous resubmission
+Previously, I have:
 
 * Corrected the LICENSE file to comply with the [MIT template](https://www.r-project.org/Licenses/MIT)

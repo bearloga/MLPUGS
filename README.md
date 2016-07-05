@@ -1,7 +1,7 @@
 # MLPUGS
-MultiLabel Prediction Using Gibbs Sampling (& Classifier Chains)
+Multi-Label Prediction Using Gibbs Sampling (and Classifier Chains)
 
-An implementation of classifier chains for multi-label prediction. Users can employ an external package (e.g. C50, randomForest), or supply their own. The package can train a single set of CCs or train an ensemble of CCs -- in parallel if running in a multicore environment. New observations are classified using a Gibbs sampler since each unobserved label is conditioned on the others. The package includes methods for evaluating the predictions for accuracy and aggregating across iterations and models to make final binary or probabilistic classifications
+An implementation of classifier chains (CCs) for multi-label prediction. Users can employ an external package (e.g. 'randomForest', 'C50'), or supply their own. The package can train a single set of CCs or train an ensemble of CCs -- in parallel if running in a multi-core environment. New observations are classified using a Gibbs sampler since each unobserved label is conditioned on the others. The package includes methods for evaluating the predictions for accuracy and aggregating across iterations and models to produce binary or probabilistic classifications.
 
 ## Installation
 
