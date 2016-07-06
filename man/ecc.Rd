@@ -4,8 +4,8 @@
 \alias{ecc}
 \title{Fit an Ensemble of Classifier Chains (ECC)}
 \usage{
-ecc(x, y, m = 5, prop_subset = 0.95, run_parallel = TRUE,
-  silent = FALSE, .f = NULL, ...)
+ecc(x, y, m = 5, prop_subset = 0.95, run_parallel = FALSE,
+  silent = TRUE, .f = NULL, ...)
 }
 \arguments{
 \item{x}{A data frame or matrix of features.}
@@ -31,16 +31,24 @@ trainer will use the built-in classifier. See Details for more information.}
 \item{...}{additional arguments to pass to \code{.f}.}
 }
 \value{
-A object of class \code{ecc}.
+An object of class \code{ECC} containing: \itemize{
+ \item \code{y_labels} : names of the columns of \code{y}
+ \item \code{fits} : An list of length \code{m}, each element being a set of
+   classifier chains - a list of length \code{L = ncol(y)} where each element
+   is a fitted model object trained to predict each of the \code{L} labels.
+}
 }
 \description{
 Constructs an ensemble of classifier chains, each chain using a
   user-supplied base classifier.
 }
 \examples{
-\dontrun{
 x <- movies_train[, -(1:3)]
 y <- movies_train[, 1:3]
+
+fit <- ecc(x, y, m = 1, .f = glm.fit, family = binomial(link = "logit"))
+
+\dontrun{
 
 fit <- ecc(x, y, .f = randomForest::randomForest)
 

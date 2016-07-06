@@ -41,21 +41,46 @@ Uses a trained ECC and Gibbs sampling to predict labels for new
   samples. \code{.f} must return a matrix of probabilities, one row for each
   observation in \code{newdata}.
 }
+\details{
+Getting the prediction function correct is very important here.
+  Since this package is a wrapper that can use any classification algorithm
+  as its base classifier, certain assumptions have been made. We assume that
+  the prediction function can return a data.frame or matrix of probabilities
+  with two columns: "0" and "1" because \code{\link{ecc}()} trains on a
+  factor of "0"s and "1"s for more universal consistency.
+}
 \examples{
-\dontrun{
 x <- movies_train[, -(1:3)]
 y <- movies_train[, 1:3]
 
+model_glm <- ecc(x, y, m = 1, .f = glm.fit, family = binomial(link = "logit"))
+
+predictions_glm <- predict(model_glm, movies_test[, -(1:3)],
+.f = function(glm_fit, newdata) {
+
+  # Credit for writing the prediction function that works
+  # with objects created through glm.fit goes to Thomas Lumley
+  
+  eta <- as.matrix(newdata) \%*\% glm_fit$coef
+  output <- glm_fit$family$linkinv(eta)
+  colnames(output) <- "1"
+  return(output)
+  
+}, n.iters = 10, burn.in = 0, thin = 1)
+
+\dontrun{
+
 model_c50 <- ecc(x, y, .f = C50::C5.0)
 predictions_c50 <- predict(model_c50, movies_test[, -(1:3)],
-                 .f = C50::predict.C5.0, type = "prob")
+                           n.iters = 10, burn.in = 0, thin = 1,
+                           .f = C50::predict.C5.0, type = "prob")
   
 model_rf <- ecc(x, y, .f = randomForest::randomForest)
 predictions_rf <- predict(model_rf, movies_test[, -(1:3)],
-                 n.iters = 1000, burn.in = 100, thin = 10,
-                 .f = function(rF, newdata){
-                        randomForest:::predict.randomForest(rF, newdata, type = "prob")
-                 })
+                          n.iters = 1000, burn.in = 100, thin = 10,
+                          .f = function(rF, newdata) {
+                            randomForest:::predict.randomForest(rF, newdata, type = "prob")
+                          })
 }
 }
 

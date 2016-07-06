@@ -15,11 +15,20 @@
 #' @param .f User-supplied classifier training function. If not supplied, the
 #' trainer will use the built-in classifier. See Details for more information.
 #' @param ... additional arguments to pass to \code{.f}.
-#' @return A object of class \code{ecc}.
-#' @examples \dontrun{
+#' @return An object of class \code{ECC} containing: \itemize{
+#'  \item \code{y_labels} : names of the columns of \code{y}
+#'  \item \code{fits} : An list of length \code{m}, each element being a set of
+#'    classifier chains - a list of length \code{L = ncol(y)} where each element
+#'    is a fitted model object trained to predict each of the \code{L} labels.
+#' }
+#' @examples
 #' x <- movies_train[, -(1:3)]
 #' y <- movies_train[, 1:3]
-#'
+#' 
+#' fit <- ecc(x, y, m = 1, .f = glm.fit, family = binomial(link = "logit"))
+#' 
+#' \dontrun{
+#' 
 #' fit <- ecc(x, y, .f = randomForest::randomForest)
 #'
 #' fit <- ecc(x, y, m = 7, .f = C50::C5.0, trials = 10)
@@ -27,7 +36,7 @@
 #' @export
 
 ecc <- function(x, y, m = 5, prop_subset = 0.95,
-                run_parallel = TRUE, silent = FALSE,
+                run_parallel = FALSE, silent = TRUE,
                 .f = NULL, ...)
 {
   n <- nrow(x)
@@ -38,22 +47,19 @@ ecc <- function(x, y, m = 5, prop_subset = 0.95,
   if ( !(m %in% c(1, 3, 5, 7)) ) {
     stop("can only train an ensemble of m = 1, 3, 5, or 7")
   }
-  returnable <- list()
-  returnable$y_labels <- colnames(y)
+  original_labels <- colnames(y)
   colnames(y) <- paste0('label_', 1:L)
-  returnable$fits <- parallel::mclapply(1:m, function(k) {
-    idx <- sample(1:n, floor(prop_subset*n), replace = FALSE)
-    fit <- list()
+  fitted_models <- parallel::mclapply(1:m, function(k) {
+    idx <- sample(1:n, floor(prop_subset * n), replace = FALSE)
+    fit <- as.list(1:L)
     for ( l in 1:L ) {
       elapsed <- system.time({
-        fit[[l]] <- .f(x = cbind(x, y[, -l]), y = factor(y[, l]), ...)
+        fit[[l]] <- .f(x = cbind(x, y[, -l, drop = FALSE]), y = factor(y[, l]), ...)
       })['elapsed']
       if (!silent) cat(sprintf("Trained model %.0f on response %.0f (took %.3f seconds)\n",
                                k, l, elapsed))
     }
     return(fit)
   }, mc.cores = ifelse(Sys.info()[['sysname']] == "Windows" || !run_parallel, 1, parallel::detectCores()))
-  class(returnable) <- "ECC"
-  return(returnable)
-  
+  return(structure(list(y_labels = original_labels, fits = fitted_models), class = "ECC"))
 }

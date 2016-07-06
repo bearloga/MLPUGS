@@ -20,22 +20,41 @@ Computes a variety of accuracy metrics for multi-label
   predictions.
 }
 \examples{
-\dontrun{
 x <- movies_train[, -(1:3)]
 y <- movies_train[, 1:3]
 
+model_glm <- ecc(x, y, m = 1, .f = glm.fit, family = binomial(link = "logit"))
+
+predictions_glm <- predict(model_glm, movies_test[, -(1:3)],
+.f = function(glm_fit, newdata) {
+
+  # Credit for writing the prediction function that works
+  # with objects created through glm.fit goes to Thomas Lumley
+  
+  eta <- as.matrix(newdata) \%*\% glm_fit$coef
+  output <- glm_fit$family$linkinv(eta)
+  colnames(output) <- "1"
+  return(output)
+  
+}, n.iters = 10, burn.in = 0, thin = 1)
+
+validate_pugs(predictions_glm, movies_test[, 1:3])
+
+\dontrun{
+
 model_c50 <- ecc(x, y, .f = C50::C5.0)
 predictions_c50 <- predict(model_c50, movies_test[, -(1:3)],
+                           n.iters = 10, burn.in = 0, thin = 1,
                            .f = C50::predict.C5.0, type = "prob")
-validate(predictions_c50, movies_test[, 1:3])
+validate_pugs(predictions_c50, movies_test[, 1:3])
   
 model_rf <- ecc(x, y, .f = randomForest::randomForest)
 predictions_rf <- predict(model_rf, movies_test[, -(1:3)],
-                          n.iters = 1000, burn.in = 100, thin = 10,
+                          n.iters = 10, burn.in = 0, thin = 1,
                           .f = function(rF, newdata){
                             randomForest:::predict.randomForest(rF, newdata, type = "prob")
                           })
-validate(predictions_rf, movies_test[, 1:3])
+validate_pugs(predictions_rf, movies_test[, 1:3])
 }
 }
 

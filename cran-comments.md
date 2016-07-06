@@ -24,12 +24,13 @@ File 'LICENSE':
 ## Resubmission
 This is a resubmission. In this version I have:
 
-* Updated DESCRIPTION:
-    - Switched to writing 'Multi-Label' in Title.
-    - Added the initialism (CC's) after 'classifier chains' in Description
-    - Single-quoted 'C50' and 'randomForest' suggestions in Description
+* Added minimal examples that execute within 5 seconds.
 
 ### Previous resubmission
 Previously, I have:
 
+* Updated DESCRIPTION:
+    - Switched to writing 'Multi-Label' in Title.
+    - Added the initialism (CC's) after 'classifier chains' in Description
+    - Single-quoted 'C50' and 'randomForest' suggestions in Description
 * Corrected the LICENSE file to comply with the [MIT template](https://www.r-project.org/Licenses/MIT)

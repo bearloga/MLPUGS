@@ -1,4 +1,4 @@
-movies <- read.csv("data-raw/fandango538.csv.gz", stringsAsFactors = FALSE)[, 1:8]
+movies <- read.delim("data-raw/fandango538.tsv.gz", stringsAsFactors = FALSE, sep = "\t")[, 1:8]
 
 colnames(movies) <- c("movie", "rotten_tomatoes", "rotten_tomatoes_user",
                       "metacritic", "metacritic_user",
