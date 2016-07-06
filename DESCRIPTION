@@ -25,5 +25,6 @@ Suggests:
     randomForest
 VignetteBuilder: knitr
 LazyData: true
+ByteCompile: yes
 License: MIT + file LICENSE
 RoxygenNote: 5.0.1
