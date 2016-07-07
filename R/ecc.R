@@ -12,8 +12,7 @@
 #'   will use a random subset (95\% by default) of the supplied training data.
 #' @param run_parallel Whether to utilize multicore capabilities of the system.
 #' @param silent Whether to print progress messages to console. Recommended.
-#' @param .f User-supplied classifier training function. If not supplied, the
-#' trainer will use the built-in classifier. See Details for more information.
+#' @param .f User-supplied classifier training function.
 #' @param ... additional arguments to pass to \code{.f}.
 #' @return An object of class \code{ECC} containing: \itemize{
 #'  \item \code{y_labels} : names of the columns of \code{y}

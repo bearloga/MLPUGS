@@ -25,8 +25,7 @@ will use a random subset (95\% by default) of the supplied training data.}
 
 \item{silent}{Whether to print progress messages to console. Recommended.}
 
-\item{.f}{User-supplied classifier training function. If not supplied, the
-trainer will use the built-in classifier. See Details for more information.}
+\item{.f}{User-supplied classifier training function.}
 
 \item{...}{additional arguments to pass to \code{.f}.}
 }
