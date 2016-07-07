@@ -49,7 +49,9 @@ ecc <- function(x, y, m = 5, prop_subset = 0.95,
   }
   original_labels <- colnames(y)
   colnames(y) <- paste0('label_', 1:L)
-  fitted_models <- parallel::mclapply(1:m, function(k) {
+  
+  fit_mdl <- function(k)
+  {
     idx <- sample(1:n, floor(prop_subset * n), replace = FALSE)
     fit <- as.list(1:L)
     for ( l in 1:L ) {
@@ -60,6 +62,16 @@ ecc <- function(x, y, m = 5, prop_subset = 0.95,
                                k, l, elapsed))
     }
     return(fit)
-  }, mc.cores = ifelse(Sys.info()[['sysname']] == "Windows" || !run_parallel, 1, parallel::detectCores()))
+  }
+  
+  fitted_models <- parallel::mclapply(1:m, fit_mdl, mc.cores = ncores(run_parallel))
   return(structure(list(y_labels = original_labels, fits = fitted_models), class = "ECC"))
+}
+
+ncores <- function(run_parallel)
+{
+  if ( Sys.info()[['sysname']] == "Windows" || !run_parallel )
+    return(1)
+  else
+    return(parallel::detectCores())
 }
