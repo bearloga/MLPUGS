@@ -6,10 +6,8 @@ An implementation of classifier chains (CC's) for multi-label prediction. Users 
 ## Installation
 
 ```R
-if ( !('devtools' %in% installed.packages()) ) install.packages("devtools")
-
-devtools::install_github("bearloga/MLPUGS") # or...
-devtools::install_github("bearloga/MLPUGS", build_vignettes = TRUE)
+# install.packages("remotes")
+remotes::install_github("bearloga/MLPUGS")
 ```
 
 ## Basic Usage
